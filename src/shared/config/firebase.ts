@@ -11,19 +11,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-let app: FirebaseApp | undefined;
-let auth: Auth | undefined;
-let storage: FirebaseStorage | undefined;
-
-// Only initialize if config is available
-if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  auth = getAuth(app);
-  storage = getStorage(app);
-} else {
-  console.warn(
-    'Firebase Client SDK not initialized. Set Firebase environment variables in .env.local'
-  );
-}
+// Initialize Firebase
+const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const auth: Auth = getAuth(app);
+const storage: FirebaseStorage = getStorage(app);
 
 export { auth, storage };

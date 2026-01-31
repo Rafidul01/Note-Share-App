@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,6 +12,9 @@
     "@apollo/client": "^3.9.0",
     "@apollo/server": "^4.10.0",
     "@as-integrations/next": "^3.0.0",
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/ios": "^8.0.2",
     "@types/bcryptjs": "^3.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "bcryptjs": "^3.0.3",
@@ -29,6 +32,7 @@
     "typescript": "^5.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.2",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
