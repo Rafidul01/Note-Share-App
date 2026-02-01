@@ -5,13 +5,11 @@ const config: CapacitorConfig = {
   appName: 'noteapp',
   webDir: 'public',
   server: {
-    // Point to your local Next.js dev server for development
-    // Use your computer's local IP address (not localhost)
-    // Find your IP: ifconfig | grep "inet " | grep -v 127.0.0.1
-    url: 'http://192.168.0.112:3000',
+    // iOS Simulator can access localhost directly (bypasses firewall)
+    // For physical device testing, you'll need to use your network IP and configure firewall
+    url: 'http://192.168.0.110:3000',
     cleartext: true,
     androidScheme: 'http'
   }
 };
-
 export default config;

@@ -1,36 +1,40 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/shared/lib/auth';
-import clientPromise from '@/shared/lib/mongodb';
-import { userCollectionName } from '@/entities/user/model/user.schema';
+import { cookies } from 'next/headers';
+import { adminAuth } from '@/shared/config/firebase-admin';
 
 export async function GET() {
   try {
-    const session = await getSession();
+    const cookieStore = cookies();
+    const token = cookieStore.get('token')?.value;
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!token) {
+      return NextResponse.json({ user: null }, { status: 401 });
     }
 
-    const client = await clientPromise;
-    const db = client.db();
-    const users = db.collection(userCollectionName);
+    // Verify the token
+    const decodedToken = await adminAuth.verifyIdToken(token);
 
-    const user = await users.findOne({ uid: session.uid });
+    // Get user details
+    const userRecord = await adminAuth.getUser(decodedToken.uid);
 
-    if (!user) {
-      return NextResponse.json({
-        email: session.email,
-        displayName: session.displayName,
-        photoURL: session.photoURL,
-      });
+    const user = {
+      uid: userRecord.uid,
+      email: userRecord.email,
+      displayName: userRecord.displayName || null,
+      photoURL: userRecord.photoURL || null,
+    };
+
+    return NextResponse.json({ user });
+  } catch (error: any) {
+    console.error('Auth error:', error);
+    
+    // If token is expired or invalid, clear the cookie
+    if (error?.errorInfo?.code === 'auth/id-token-expired' || 
+        error?.errorInfo?.code === 'auth/argument-error') {
+      const cookieStore = cookies();
+      cookieStore.delete('token');
     }
-
-    return NextResponse.json({
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-    });
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    
+    return NextResponse.json({ user: null }, { status: 401 });
   }
 }

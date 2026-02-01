@@ -1,11 +1,11 @@
 'use server';
 
-import { signOut } from 'firebase/auth';
-import { auth } from '@/shared/config/firebase';
+import { cookies } from 'next/headers';
 
 export async function logoutAction() {
   try {
-    await signOut(auth);
+    const cookieStore = cookies();
+    cookieStore.delete('token');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
