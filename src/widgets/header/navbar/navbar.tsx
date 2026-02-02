@@ -49,7 +49,7 @@ export function Navbar() {
   if (!user) return null;
 
   return (
-    <nav className="bg-white shadow-md border-b sticky top-0 z-50">
+    <nav className="bg-white shadow-md border-b sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}

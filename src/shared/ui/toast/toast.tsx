@@ -38,9 +38,10 @@ export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 flex items-center gap-3 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${
+      className={`fixed top-24 right-4 z-50 flex items-center gap-3 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg transition-all duration-300 max-w-sm ${
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 5rem)' }}
     >
       <span className="text-xl font-bold">{icon}</span>
       <span className="font-medium">{message}</span>

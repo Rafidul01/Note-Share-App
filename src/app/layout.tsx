@@ -12,6 +12,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "NoteApp - Your Personal Note Taking App",
   description: "Create, organize, and share notes with ease",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover", // This enables safe area insets
+  },
 };
 
 export default function RootLayout({
