@@ -8,15 +8,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        
-        // Configure status bar appearance
-        if #available(iOS 13.0, *) {
-            let statusBarManager = window?.windowScene?.statusBarManager
-            statusBarManager?.statusBarStyle = .darkContent
-        } else {
-            UIApplication.shared.statusBarStyle = .default
-        }
-        
         return true
     }
 
