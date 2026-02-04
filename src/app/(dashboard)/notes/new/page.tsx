@@ -11,8 +11,8 @@ export default function NewNotePage() {
   };
 
   const handleSuccess = () => {
-    // The form already handles navigation to the note detail page
-    // So we don't need to do anything here
+    // Navigate back to notes list after successful creation
+    router.push('/notes');
   };
 
   return (

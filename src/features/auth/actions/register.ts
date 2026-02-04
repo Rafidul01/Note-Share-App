@@ -15,19 +15,24 @@ export async function registerAction(credentials: RegisterCredentials) {
       displayName: credentials.displayName || '',
     });
 
-    // Store user in MongoDB
-    const client = await clientPromise;
-    const db = client.db();
-    const users = db.collection(userCollectionName);
+    // Store user in MongoDB (non-blocking, log error if fails)
+    try {
+      const client = await clientPromise;
+      const db = client.db();
+      const users = db.collection(userCollectionName);
 
-    await users.insertOne({
-      uid: userRecord.uid,
-      email: userRecord.email!,
-      displayName: credentials.displayName || '',
-      photoURL: '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+      await users.insertOne({
+        uid: userRecord.uid,
+        email: userRecord.email!,
+        displayName: credentials.displayName || '',
+        photoURL: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } catch (mongoError: any) {
+      console.error('MongoDB save failed (non-critical):', mongoError.message);
+      // Continue with registration even if MongoDB fails
+    }
 
     // Create a custom token for the user
     const customToken = await adminAuth.createCustomToken(userRecord.uid);
