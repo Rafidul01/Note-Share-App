@@ -34,7 +34,7 @@ export async function GET() {
     // If token is expired or invalid, clear the cookie
     if (error?.errorInfo?.code === 'auth/id-token-expired' || 
         error?.errorInfo?.code === 'auth/argument-error') {
-      const cookieStore = cookies();
+       const cookieStore = cookies();
       cookieStore.delete('token');
     }
     

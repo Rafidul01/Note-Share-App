@@ -5,9 +5,9 @@ const config: CapacitorConfig = {
   appName: 'NoteApp',
   webDir: 'out',
   server: {
-    // For production, remove the url and use the deployed web app
-    // url: 'http://192.168.0.110:3000',
-    // cleartext: true,
+    // Point to your deployed Vercel URL
+    url: 'https://note-share-app-one.vercel.app', // Replace with your actual Vercel URL
+    cleartext: false,
     androidScheme: 'https'
   },
   plugins: {

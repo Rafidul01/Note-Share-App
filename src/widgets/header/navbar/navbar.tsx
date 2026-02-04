@@ -49,7 +49,7 @@ export function Navbar() {
   if (!user) return null;
 
   return (
-    <nav className="bg-white shadow-md border-b sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}>
+    <nav className="bg-white dark:bg-gray-800 shadow-md border-b dark:border-gray-700 sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
@@ -70,8 +70,8 @@ export function Navbar() {
                 href={link.href}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   isActive(link.href)
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <span className="mr-2">{link.icon}</span>
@@ -85,34 +85,34 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors"
+                className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 py-2 transition-colors"
               >
                 {/* Avatar */}
                 {user.photoURL ? (
                   <img
                     src={user.photoURL}
                     alt={user.displayName || 'User'}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-blue-500 ring-2 ring-blue-100"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-blue-500 ring-2 ring-blue-100 dark:ring-blue-900"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold border-2 border-blue-500 ring-2 ring-blue-100">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold border-2 border-blue-500 ring-2 ring-blue-100 dark:ring-blue-900">
                     {getInitials()}
                   </div>
                 )}
 
                 {/* User Info - Hidden on mobile */}
                 <div className="text-left hidden lg:block">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {user.displayName || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500 truncate max-w-[150px]">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">
                     {user.email}
                   </p>
                 </div>
 
                 {/* Dropdown Arrow */}
                 <svg
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                  className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${
                     dropdownOpen ? 'rotate-180' : ''
                   }`}
                   fill="none"
@@ -135,19 +135,19 @@ export function Navbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-20 py-2">
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-20 py-2">
                     {/* User Info in Dropdown - Mobile */}
-                    <div className="px-4 py-3 border-b lg:hidden">
-                      <p className="text-sm font-semibold text-gray-900">
+                    <div className="px-4 py-3 border-b dark:border-gray-700 lg:hidden">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {user.displayName || 'User'}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {user.email}
                       </p>
                     </div>
 
                     {/* Mobile Navigation Links */}
-                    <div className="md:hidden border-b">
+                    <div className="md:hidden border-b dark:border-gray-700">
                       {navLinks.map((link) => (
                         <Link
                           key={link.href}
@@ -155,8 +155,8 @@ export function Navbar() {
                           onClick={() => setDropdownOpen(false)}
                           className={`flex items-center px-4 py-2 text-sm transition-colors ${
                             isActive(link.href)
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50'
+                              ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                           }`}
                         >
                           <span className="mr-3">{link.icon}</span>
@@ -168,7 +168,7 @@ export function Navbar() {
                     {/* Logout Button */}
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center"
                     >
                       <span className="mr-3">🚪</span>
                       Logout

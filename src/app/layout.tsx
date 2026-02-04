@@ -27,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="bg-white">
-      <body className={`${inter.variable} font-sans antialiased bg-white`}>
+    <html lang="en" className="bg-gray-50 dark:bg-gray-900">
+      <body className={`${inter.variable} font-sans antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100`}>
         <AuthProvider>
           <ToastProvider>
             {children}

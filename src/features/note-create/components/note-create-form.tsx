@@ -70,7 +70,7 @@ export function NoteCreateForm({ onSuccess, onCancel }: NoteCreateFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium mb-2">
+        <label htmlFor="title" className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">
           Title
         </label>
         <input
@@ -79,14 +79,14 @@ export function NoteCreateForm({ onSuccess, onCancel }: NoteCreateFormProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+          className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-blue-500 focus:outline-none"
           placeholder="Enter note title..."
           disabled={loading}
         />
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium mb-2">
+        <label htmlFor="content" className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">
           Content
         </label>
         <textarea
@@ -95,14 +95,14 @@ export function NoteCreateForm({ onSuccess, onCancel }: NoteCreateFormProps) {
           onChange={(e) => setContent(e.target.value)}
           required
           rows={10}
-          className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none resize-y"
+          className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-blue-500 focus:outline-none resize-y"
           placeholder="Write your note content here..."
           disabled={loading}
         />
       </div>
 
       <div>
-        <label htmlFor="tags" className="block text-sm font-medium mb-2">
+        <label htmlFor="tags" className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">
           Tags (Optional)
         </label>
         <div className="flex gap-2 mb-2">
@@ -120,7 +120,7 @@ export function NoteCreateForm({ onSuccess, onCancel }: NoteCreateFormProps) {
                 }
               }
             }}
-            className="flex-1 rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+            className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-blue-500 focus:outline-none"
             placeholder="Type a tag and press Enter..."
             disabled={loading}
           />
@@ -133,7 +133,7 @@ export function NoteCreateForm({ onSuccess, onCancel }: NoteCreateFormProps) {
               }
             }}
             disabled={loading || !tagInput.trim()}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 disabled:opacity-50 transition-colors"
+            className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
           >
             Add
           </button>
@@ -143,13 +143,13 @@ export function NoteCreateForm({ onSuccess, onCancel }: NoteCreateFormProps) {
             {tags.map((tag, index) => (
               <span
                 key={index}
-                className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => setTags(tags.filter((_, i) => i !== index))}
-                  className="hover:text-blue-600"
+                  className="hover:text-blue-600 dark:hover:text-blue-400"
                   disabled={loading}
                 >
                   ×
@@ -165,7 +165,7 @@ export function NoteCreateForm({ onSuccess, onCancel }: NoteCreateFormProps) {
           type="button"
           onClick={handleCancel}
           disabled={loading}
-          className="bg-gray-200 text-gray-700 py-2 px-6 rounded-md hover:bg-gray-300 disabled:opacity-50 transition-colors"
+          className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 px-6 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
         >
           Cancel
         </button>

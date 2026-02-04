@@ -46,23 +46,23 @@ export function NoteCard({ note, onShare, onTagClick, onClick }: NoteCardProps) 
   return (
     <div 
       onClick={handleCardClick}
-      className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-200 overflow-hidden group cursor-pointer"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-all duration-200 overflow-hidden group cursor-pointer"
     >
       <div className="p-5">
         {/* Header with title and share button */}
         <div className="flex items-start justify-between mb-3">
-          <h3 className="font-semibold text-lg text-gray-900 flex-1 line-clamp-2">
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 flex-1 line-clamp-2">
             {note.title}
           </h3>
           <button
             onClick={handleShareClick}
             onMouseEnter={() => setIsShareHovered(true)}
             onMouseLeave={() => setIsShareHovered(false)}
-            className="ml-2 p-2 rounded-full hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+            className="ml-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
             aria-label="Share note"
           >
             <svg
-              className="w-5 h-5 text-gray-600"
+              className="w-5 h-5 text-gray-600 dark:text-gray-400"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -76,7 +76,7 @@ export function NoteCard({ note, onShare, onTagClick, onClick }: NoteCardProps) 
         </div>
 
         {/* Content preview */}
-        <p className="text-gray-600 text-sm line-clamp-3 mb-4">
+        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
           {note.content}
         </p>
 
@@ -96,14 +96,14 @@ export function NoteCard({ note, onShare, onTagClick, onClick }: NoteCardProps) 
             </button>
           ))}
           {note.tags.length > 4 && (
-            <span className="text-xs px-3 py-1 rounded-full bg-gray-200 text-gray-600">
+            <span className="text-xs px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
               +{note.tags.length - 4}
             </span>
           )}
         </div>
 
         {/* Footer with date and shared indicator */}
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-gray-700">
           <span>{formatDate(note.createdAt)}</span>
           {note.sharedWith && note.sharedWith.length > 0 && (
             <div className="flex items-center gap-1">
