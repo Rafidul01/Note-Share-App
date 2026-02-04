@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/shared/ui/modal/modal';
 import { Note } from '@/entities/note/model/note.types';
 import { useToast } from '@/shared/ui/toast/toast-provider';
+import { useNotesStore } from '@/shared/store/notes-store';
+import { deleteNoteAction } from '@/features/note-delete/actions/delete-note';
+import { updateNoteAction } from '@/features/note-edit/actions/update-note';
 
 interface NoteDetailModalProps {
   note: Note | null;
@@ -12,9 +15,33 @@ interface NoteDetailModalProps {
   isSharedNote?: boolean;
 }
 
-export function NoteDetailModal({ note, isOpen, onClose, isSharedNote = false }: NoteDetailModalProps) {
+export function NoteDetailModal({ note: initialNote, isOpen, onClose, isSharedNote = false }: NoteDetailModalProps) {
   const { showToast } = useToast();
+  const deleteNote = useNotesStore((state) => state.deleteNote);
+  const updateNote = useNotesStore((state) => state.updateNote);
+  const myNotes = useNotesStore((state) => state.myNotes);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Get the latest note from store
+  const note = initialNote ? myNotes.find(n => n.id === initialNote.id) || initialNote : null;
+  
+  // Edit form state
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editTagInput, setEditTagInput] = useState('');
+  const [editTags, setEditTags] = useState<string[]>([]);
+
+  // Initialize edit form when note changes or editing starts
+  useEffect(() => {
+    if (note && isEditing) {
+      setEditTitle(note.title);
+      setEditContent(note.content);
+      setEditTags(note.tags.map(tag => tag.name));
+    }
+  }, [note, isEditing]);
 
   if (!note) return null;
 
@@ -24,11 +51,98 @@ export function NoteDetailModal({ note, isOpen, onClose, isSharedNote = false }:
 
   const handleEdit = () => {
     setIsEditing(true);
-    showToast('Edit feature coming soon!', 'info');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+    setEditTags(note.tags.map(tag => tag.name));
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      showToast('Title and content are required', 'error');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const result = await updateNoteAction({
+        id: note.id,
+        title: editTitle,
+        content: editContent,
+        tags: editTags,
+      });
+
+      if (result.success) {
+        // Update the note in the store
+        updateNote(note.id, {
+          title: editTitle,
+          content: editContent,
+          tags: editTags.map((tagName, index) => ({
+            id: note.tags[index]?.id || `temp-${index}`,
+            name: tagName,
+            color: note.tags[index]?.color || '#BFDBFE',
+            userId: note.owner.uid,
+            createdAt: note.tags[index]?.createdAt || new Date(),
+          })),
+          updatedAt: new Date(),
+        });
+        
+        showToast('Note updated successfully!', 'success');
+        setIsEditing(false);
+      } else {
+        showToast(result.error || 'Failed to update note', 'error');
+      }
+    } catch (error) {
+      showToast('An error occurred while updating the note', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddEditTag = () => {
+    if (editTagInput.trim() && !editTags.includes(editTagInput.trim())) {
+      setEditTags([...editTags, editTagInput.trim()]);
+      setEditTagInput('');
+    }
+  };
+
+  const handleRemoveEditTag = (index: number) => {
+    setEditTags(editTags.filter((_, i) => i !== index));
   };
 
   const handleDelete = () => {
-    showToast('Delete feature coming soon!', 'info');
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!note) return;
+
+    setIsDeleting(true);
+    
+    try {
+      const result = await deleteNoteAction(note.id);
+      
+      if (result.success) {
+        deleteNote(note.id);
+        showToast('Note deleted successfully!', 'success');
+        setShowDeleteConfirm(false);
+        onClose();
+      } else {
+        showToast(result.error || 'Failed to delete note', 'error');
+      }
+    } catch (error) {
+      showToast('An error occurred while deleting the note', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
   };
 
   const handleAddTag = () => {
@@ -49,10 +163,20 @@ export function NoteDetailModal({ note, isOpen, onClose, isSharedNote = false }:
     <Modal isOpen={isOpen} onClose={onClose} title="">
       <div className="space-y-6">
         {/* Header with actions */}
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-3xl font-bold text-gray-900 flex-1">{note.title}</h1>
-          {!isSharedNote && (
-            <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          {isEditing ? (
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="text-2xl sm:text-3xl font-bold text-gray-900 w-full border-b-2 border-blue-500 focus:outline-none"
+              placeholder="Note title..."
+            />
+          ) : (
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex-1">{note.title}</h1>
+          )}
+          {!isSharedNote && !isEditing && (
+            <div className="flex gap-2 self-end sm:self-start">
               <button
                 onClick={handleEdit}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -89,7 +213,8 @@ export function NoteDetailModal({ note, isOpen, onClose, isSharedNote = false }:
               </button>
               <button
                 onClick={handleDelete}
-                className="p-2 rounded-lg hover:bg-red-50 transition-colors"
+                disabled={isDeleting}
+                className="p-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
                 title="Delete note"
               >
                 <svg
@@ -109,73 +234,124 @@ export function NoteDetailModal({ note, isOpen, onClose, isSharedNote = false }:
         </div>
 
         {/* Metadata */}
-        <div className="flex items-center gap-4 text-sm text-gray-500 pb-4 border-b">
-          <div className="flex items-center gap-1">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>Created {formatDate(note.createdAt)}</span>
-          </div>
-          {note.updatedAt.getTime() !== note.createdAt.getTime() && (
+        {!isEditing && (
+          <div className="flex items-center gap-4 text-sm text-gray-500 pb-4 border-b">
             <div className="flex items-center gap-1">
-              <span>• Updated {formatDate(note.updatedAt)}</span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>Created {formatDate(note.createdAt)}</span>
             </div>
-          )}
-        </div>
+            {note.updatedAt.getTime() !== note.createdAt.getTime() && (
+              <div className="flex items-center gap-1">
+                <span>• Updated {formatDate(note.updatedAt)}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tags Section */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-700">Tags</h3>
-            {!isSharedNote && (
-              <button
-                onClick={handleAddTag}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                + Add Tag
-              </button>
-            )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {note.tags.length > 0 ? (
-              note.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-105 cursor-pointer"
-                  style={{
-                    backgroundColor: tag.color || '#e5e7eb',
-                    color: '#374151',
+          {isEditing ? (
+            <div>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={editTagInput}
+                  onChange={(e) => setEditTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddEditTag();
+                    }
                   }}
+                  className="flex-1 rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+                  placeholder="Type a tag and press Enter..."
+                />
+                <button
+                  type="button"
+                  onClick={handleAddEditTag}
+                  disabled={!editTagInput.trim()}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 disabled:opacity-50 transition-colors"
                 >
-                  {tag.name}
-                </span>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 italic">No tags yet</p>
-            )}
-          </div>
+                  Add
+                </button>
+              </div>
+              {editTags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {editTags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveEditTag(index)}
+                        className="hover:text-blue-600"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {note.tags.length > 0 ? (
+                note.tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-105 cursor-pointer"
+                    style={{
+                      backgroundColor: tag.color || '#e5e7eb',
+                      color: '#374151',
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 italic">No tags yet</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Content</h3>
-          <div className="prose max-w-none">
-            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-              {note.content}
-            </p>
-          </div>
+          {isEditing ? (
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              rows={10}
+              className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none resize-y"
+              placeholder="Write your note content here..."
+            />
+          ) : (
+            <div className="prose max-w-none">
+              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                {note.content}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Images Section */}
-        {note.images && note.images.length > 0 && (
+        {!isEditing && note.images && note.images.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Images</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -192,7 +368,7 @@ export function NoteDetailModal({ note, isOpen, onClose, isSharedNote = false }:
         )}
 
         {/* Shared With Section */}
-        {!isSharedNote && note.sharedWith && note.sharedWith.length > 0 && (
+        {!isEditing && !isSharedNote && note.sharedWith && note.sharedWith.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Shared With ({note.sharedWith.length})
@@ -227,13 +403,80 @@ export function NoteDetailModal({ note, isOpen, onClose, isSharedNote = false }:
         )}
 
         {/* Owner Info */}
-        <div className="pt-4 border-t">
-          <p className="text-xs text-gray-500">
-            {isSharedNote ? 'Shared by' : 'Created by'}{' '}
-            <span className="font-medium">{note.owner.displayName || note.owner.email}</span>
-          </p>
-        </div>
+        {!isEditing && (
+          <div className="pt-4 border-t">
+            <p className="text-xs text-gray-500">
+              {isSharedNote ? 'Shared by' : 'Created by'}{' '}
+              <span className="font-medium">{note.owner.displayName || note.owner.email}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Edit Actions */}
+        {isEditing && (
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <button
+              onClick={handleCancelEdit}
+              disabled={isSaving}
+              className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              disabled={isSaving}
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Note</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Are you sure you want to delete "{note.title}"? This action cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={cancelDelete}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }
