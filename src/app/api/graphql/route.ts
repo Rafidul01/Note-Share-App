@@ -3,6 +3,9 @@ import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import { NextRequest } from 'next/server';
 import { getSession, FirebaseUser } from '@/shared/lib/auth';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 const typeDefs = `#graphql
   type User {
     id: ID!

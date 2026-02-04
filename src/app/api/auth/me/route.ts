@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { adminAuth } from '@/shared/config/firebase-admin';
 
+// Force dynamic rendering - don't try to generate this at build time
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const cookieStore = cookies();

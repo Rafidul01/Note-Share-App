@@ -18,9 +18,10 @@ function initializeFirebaseAdmin() {
   const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
-    throw new Error(
-      'Missing Firebase Admin credentials. Please check your .env.local file.'
-    );
+    // During build time, environment variables might not be available
+    // Don't throw error, just log warning
+    console.warn('⚠️ Firebase Admin credentials not found. This is expected during build time.');
+    return;
   }
 
   try {
@@ -37,12 +38,26 @@ function initializeFirebaseAdmin() {
     console.log('✅ Firebase Admin initialized successfully');
   } catch (error) {
     console.error('❌ Firebase Admin initialization error:', error);
-    throw error;
+    // Don't throw during initialization - let it fail at runtime if needed
   }
 }
 
-// Initialize on module load
+// Initialize on module load (but don't throw if it fails)
 initializeFirebaseAdmin();
 
-export const adminAuth = adminAuthInstance!;
+// Lazy getter for adminAuth - will throw at runtime if not initialized
+export const getAdminAuth = (): Auth => {
+  if (!adminAuthInstance) {
+    throw new Error('Firebase Admin not initialized. Check environment variables.');
+  }
+  return adminAuthInstance;
+};
+
+// For backward compatibility
+export const adminAuth = new Proxy({} as Auth, {
+  get(target, prop) {
+    return getAdminAuth()[prop as keyof Auth];
+  }
+});
+
 export { adminApp };
