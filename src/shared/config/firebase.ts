@@ -2,33 +2,21 @@ import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
-// Log all NEXT_PUBLIC env vars to debug
-console.log('Environment variables check:', {
-  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'EXISTS' : 'MISSING',
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? 'EXISTS' : 'MISSING',
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? 'EXISTS' : 'MISSING',
-});
-
+// Fallback to hardcoded values if env vars are not available (for debugging)
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyD7v_kSCwKs-ItsRZGH-Pv4E-hYAFxZx70",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "noteshare-d6d2b.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "noteshare-d6d2b",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "noteshare-d6d2b.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "786894015215",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:786894015215:web:1348a4baa24ceb0df1a91a",
 };
 
-console.log('Firebase config being used:', {
-  apiKey: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 10)}...` : 'UNDEFINED',
-  authDomain: firebaseConfig.authDomain,
+console.log('🔥 Firebase initialization:', {
+  usingEnvVars: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  apiKey: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 15)}...` : 'MISSING',
   projectId: firebaseConfig.projectId,
 });
-
-// Validate required config
-if (!firebaseConfig.apiKey) {
-  console.error('CRITICAL: NEXT_PUBLIC_FIREBASE_API_KEY is not set!');
-  throw new Error('Missing NEXT_PUBLIC_FIREBASE_API_KEY environment variable');
-}
 
 // Initialize Firebase
 const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
