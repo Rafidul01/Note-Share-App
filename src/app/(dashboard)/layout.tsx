@@ -46,6 +46,14 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Fixed background for iOS safe area (notch) */}
+      <div 
+        className="fixed top-0 left-0 right-0 bg-white z-40"
+        style={{ 
+          height: 'env(safe-area-inset-top)',
+          minHeight: '44px' // Fallback for devices without notch
+        }}
+      />
       <Navbar />
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {children}

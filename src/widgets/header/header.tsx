@@ -35,7 +35,7 @@ export function Header() {
   if (!user) return null;
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white shadow-sm border-b relative z-50" style={{ paddingTop: 'max(env(safe-area-inset-top), 0px)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <h1 className="text-2xl font-bold text-blue-600">NoteApp</h1>

@@ -3,38 +3,40 @@
 import { useEffect, useState } from 'react';
 import { Note } from '@/entities/note/model/note.types';
 import { SharedNoteCard } from '@/entities/note/ui/shared-note-card/shared-note-card';
-import { getSharedNotes } from '@/features/note/actions/get-shared-notes';
+import { getSharedNotesAction } from '@/features/note/actions/get-shared-notes';
 import { NoteDetailModal } from '@/features/note/components/note-detail-modal';
+import { useNotesStore } from '@/shared/store/notes-store';
+import { useToast } from '@/shared/ui/toast/toast-provider';
 
 export default function SharedNotesPage() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
+  const { sharedNotes, sharedNotesLoading, setSharedNotes, setSharedNotesLoading, setSharedNotesError } = useNotesStore();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     loadSharedNotes();
   }, []);
 
   const loadSharedNotes = async () => {
-    try {
-      setLoading(true);
-      const sharedNotes = await getSharedNotes();
-      setNotes(sharedNotes);
-    } catch (error) {
-      console.error('Failed to load shared notes:', error);
-    } finally {
-      setLoading(false);
+    setSharedNotesLoading(true);
+    const result = await getSharedNotesAction();
+    
+    if (result.success && result.notes) {
+      setSharedNotes(result.notes);
+      setSharedNotesError(null);
+    } else {
+      setSharedNotesError(result.error || 'Failed to load shared notes');
+      showToast(result.error || 'Failed to load shared notes', 'error');
     }
+    
+    setSharedNotesLoading(false);
   };
 
   const handleViewDetails = (note: Note) => {
     setSelectedNote(note);
-    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false);
     setSelectedNote(null);
   };
 
@@ -43,7 +45,7 @@ export default function SharedNotesPage() {
     // TODO: Implement tag filtering
   };
 
-  if (loading) {
+  if (sharedNotesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -64,7 +66,7 @@ export default function SharedNotesPage() {
           </p>
         </div>
         <div className="text-sm text-gray-500">
-          {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+          {sharedNotes.length} {sharedNotes.length === 1 ? 'note' : 'notes'}
         </div>
       </div>
 
@@ -89,7 +91,7 @@ export default function SharedNotesPage() {
         </div>
       </div>
 
-      {notes.length === 0 ? (
+      {sharedNotes.length === 0 ? (
         <div className="text-center py-12">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
@@ -111,7 +113,7 @@ export default function SharedNotesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {notes.map((note) => (
+          {sharedNotes.map((note) => (
             <SharedNoteCard
               key={note.id}
               note={note}
@@ -125,7 +127,7 @@ export default function SharedNotesPage() {
       {selectedNote && (
         <NoteDetailModal
           note={selectedNote}
-          isOpen={isModalOpen}
+          isOpen={!!selectedNote}
           onClose={handleCloseModal}
           isSharedNote={true}
         />

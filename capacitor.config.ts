@@ -13,10 +13,19 @@ const config: CapacitorConfig = {
   },
   plugins: {
     StatusBar: {
-      style: 'LIGHT',
+      style: 'DARK',
       backgroundColor: '#ffffff',
-      overlaysWebView: true
+      overlaysWebView: false
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true
     }
+  },
+  ios: {
+    contentInset: 'always',
+    backgroundColor: '#ffffff'
   }
 };
 export default config;

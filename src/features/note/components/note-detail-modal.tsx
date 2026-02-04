@@ -7,6 +7,9 @@ import { useToast } from '@/shared/ui/toast/toast-provider';
 import { useNotesStore } from '@/shared/store/notes-store';
 import { deleteNoteAction } from '@/features/note-delete/actions/delete-note';
 import { updateNoteAction } from '@/features/note-edit/actions/update-note';
+import { shareNoteAction } from '@/features/note-share/actions/share-note';
+import { revokeAccessAction } from '@/features/note-share/actions/revoke-access';
+import { searchUsersAction } from '@/features/note-share/actions/search-users';
 
 interface NoteDetailModalProps {
   note: Note | null;
@@ -24,6 +27,12 @@ export function NoteDetailModal({ note: initialNote, isOpen, onClose, isSharedNo
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
+  const [isSharing, setIsSharing] = useState(false);
+  const [userSuggestions, setUserSuggestions] = useState<Array<{ uid: string; email: string; displayName: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Get the latest note from store
   const note = initialNote ? myNotes.find(n => n.id === initialNote.id) || initialNote : null;
@@ -46,7 +55,89 @@ export function NoteDetailModal({ note: initialNote, isOpen, onClose, isSharedNo
   if (!note) return null;
 
   const handleShare = () => {
-    showToast('Share feature coming soon!', 'info');
+    setShowShareModal(true);
+    setShareEmail('');
+    setUserSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const handleSearchUsers = async (query: string) => {
+    setShareEmail(query);
+    
+    if (query.length < 2) {
+      setUserSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearching(true);
+    
+    try {
+      const result = await searchUsersAction(query);
+      
+      if (result.success && result.users) {
+        setUserSuggestions(result.users);
+        setShowSuggestions(result.users.length > 0);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectUser = (email: string) => {
+    setShareEmail(email);
+    setShowSuggestions(false);
+    setUserSuggestions([]);
+  };
+
+  const handleShareSubmit = async () => {
+    if (!note || !shareEmail.trim()) {
+      showToast('Please enter an email address', 'error');
+      return;
+    }
+
+    setIsSharing(true);
+
+    try {
+      const result = await shareNoteAction(note.id, shareEmail.trim());
+
+      if (result.success) {
+        showToast('Note shared successfully!', 'success');
+        setShareEmail('');
+        setShowShareModal(false);
+        setUserSuggestions([]);
+        setShowSuggestions(false);
+        // Refresh the note to show updated sharedWith list
+        // The store will be updated when user closes and reopens the modal
+      } else {
+        showToast(result.error || 'Failed to share note', 'error');
+      }
+    } catch (error) {
+      showToast('An error occurred while sharing the note', 'error');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleRevokeAccess = async (userUid: string) => {
+    if (!note) return;
+
+    try {
+      const result = await revokeAccessAction(note.id, userUid);
+
+      if (result.success) {
+        // Update the note in store to remove the user from sharedWith
+        const updatedSharedWith = note.sharedWith.filter(u => u.uid !== userUid);
+        updateNote(note.id, { sharedWith: updatedSharedWith });
+        showToast('Access revoked successfully!', 'success');
+      } else {
+        showToast(result.error || 'Failed to revoke access', 'error');
+      }
+    } catch (error) {
+      showToast('An error occurred while revoking access', 'error');
+    }
   };
 
   const handleEdit = () => {
@@ -392,7 +483,7 @@ export function NoteDetailModal({ note: initialNote, isOpen, onClose, isSharedNo
                   </div>
                   <button
                     className="text-xs text-red-600 hover:text-red-700"
-                    onClick={() => showToast('Revoke access coming soon!', 'info')}
+                    onClick={() => handleRevokeAccess(user.uid)}
                   >
                     Remove
                   </button>
@@ -432,6 +523,95 @@ export function NoteDetailModal({ note: initialNote, isOpen, onClose, isSharedNo
           </div>
         )}
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Note</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Enter the email address of the person you want to share this note with.
+            </p>
+            <div className="relative mb-4">
+              <input
+                type="email"
+                value={shareEmail}
+                onChange={(e) => handleSearchUsers(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !showSuggestions) {
+                    handleShareSubmit();
+                  }
+                }}
+                onFocus={() => {
+                  if (userSuggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                placeholder="user@example.com"
+                className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+                disabled={isSharing}
+                autoComplete="off"
+              />
+              
+              {/* Autocomplete Suggestions */}
+              {showSuggestions && userSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {userSuggestions.map((user) => (
+                    <button
+                      key={user.uid}
+                      onClick={() => handleSelectUser(user.email)}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-medium text-blue-600">
+                            {user.displayName?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {user.displayName && (
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {user.displayName}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {isSearching && (
+                <div className="absolute right-3 top-3">
+                  <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowShareModal(false);
+                  setShareEmail('');
+                  setUserSuggestions([]);
+                  setShowSuggestions(false);
+                }}
+                disabled={isSharing}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleShareSubmit}
+                disabled={isSharing || !shareEmail.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {isSharing ? 'Sharing...' : 'Share'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

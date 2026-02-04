@@ -4,7 +4,9 @@ import { getSession } from '@/shared/lib/auth';
 import clientPromise from '@/shared/lib/mongodb';
 import { noteCollectionName } from '@/entities/note/model/note.schema';
 import { userCollectionName } from '@/entities/user/model/user.schema';
+import { tagCollectionName } from '@/entities/tag/model/tag.schema';
 import { Note } from '@/entities/note/model/note.types';
+import { ObjectId } from 'mongodb';
 
 export async function getSharedNotesAction(): Promise<{ success: boolean; notes?: Note[]; error?: string }> {
   try {
@@ -18,6 +20,7 @@ export async function getSharedNotesAction(): Promise<{ success: boolean; notes?
     const db = client.db();
     const notesCollection = db.collection(noteCollectionName);
     const usersCollection = db.collection(userCollectionName);
+    const tagsCollection = db.collection(tagCollectionName);
 
     // Find all notes where the current user is in the sharedWith array
     const notes = await notesCollection
@@ -39,12 +42,26 @@ export async function getSharedNotesAction(): Promise<{ success: boolean; notes?
           .find({ uid: { $in: note.sharedWith || [] } })
           .toArray();
 
+        // Get tags info
+        const tagIds = (note.tags || []).map((id: any) => 
+          typeof id === 'string' ? new ObjectId(id) : id
+        );
+        const noteTags = await tagsCollection
+          .find({ _id: { $in: tagIds } })
+          .toArray();
+
         return {
           id: note._id.toString(),
           title: note.title,
           content: note.content,
           images: note.images || [],
-          tags: [], // We'll implement tags later
+          tags: noteTags.map((tag) => ({
+            id: tag._id.toString(),
+            name: tag.name,
+            color: tag.color,
+            userId: tag.userId,
+            createdAt: tag.createdAt,
+          })),
           owner: {
             id: owner?._id.toString() || '',
             uid: owner?.uid || '',
