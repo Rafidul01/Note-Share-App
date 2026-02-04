@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NoteCreateModal } from '@/features/note-create/components/note-create-modal';
 import { NoteDetailModal } from '@/features/note/components/note-detail-modal';
 import { NoteCard } from '@/entities/note/ui/note-card/note-card';
@@ -20,6 +20,10 @@ export default function NotesPage() {
   const [userSuggestions, setUserSuggestions] = useState<Array<{ uid: string; email: string; displayName: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartY = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   
   // Get notes from Zustand store
@@ -43,6 +47,39 @@ export default function NotesPage() {
     }
     
     setMyNotesLoading(false);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadNotes();
+    setIsRefreshing(false);
+    setPullDistance(0);
+    showToast('Notes refreshed!', 'success');
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isRefreshing || myNotesLoading) return;
+    
+    const touchY = e.touches[0].clientY;
+    const distance = touchY - touchStartY.current;
+    
+    if (window.scrollY === 0 && distance > 0) {
+      setPullDistance(Math.min(distance, 120));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 80 && !isRefreshing) {
+      handleRefresh();
+    } else {
+      setPullDistance(0);
+    }
   };
 
   const toggleCreateModal = () => {
@@ -127,7 +164,7 @@ export default function NotesPage() {
     console.log('Filter by tag:', tagId);
   };
 
-  if (myNotesLoading) {
+  if (myNotesLoading && !isRefreshing) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-gray-900 dark:text-gray-100">Loading your notes...</div>
@@ -136,7 +173,51 @@ export default function NotesPage() {
   }
 
   return (
-    <div>
+    <div
+      ref={scrollContainerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative"
+    >
+      {/* Pull to Refresh Indicator */}
+      {pullDistance > 0 && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex items-center justify-center transition-all duration-200 z-10"
+          style={{ 
+            height: `${pullDistance}px`,
+            opacity: pullDistance / 120
+          }}
+        >
+          <div className="flex flex-col items-center">
+            <div className={`transition-transform duration-200 ${pullDistance > 80 ? 'rotate-180' : ''}`}>
+              <svg 
+                className="w-6 h-6 text-blue-600 dark:text-blue-400" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              {pullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Refreshing Spinner */}
+      {isRefreshing && (
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-center py-4 z-10">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+        </div>
+      )}
+
+      <div style={{ marginTop: isRefreshing ? '40px' : '0px', transition: 'margin-top 0.2s' }}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Notes</h1>
       </div>
@@ -285,6 +366,7 @@ export default function NotesPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

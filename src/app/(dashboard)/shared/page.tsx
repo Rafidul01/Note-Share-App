@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Note } from '@/entities/note/model/note.types';
 import { SharedNoteCard } from '@/entities/note/ui/shared-note-card/shared-note-card';
 import { getSharedNotesAction } from '@/features/note/actions/get-shared-notes';
@@ -12,6 +12,10 @@ export default function SharedNotesPage() {
   const { showToast } = useToast();
   const { sharedNotes, sharedNotesLoading, setSharedNotes, setSharedNotesLoading, setSharedNotesError } = useNotesStore();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartY = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadSharedNotes();
@@ -32,6 +36,39 @@ export default function SharedNotesPage() {
     setSharedNotesLoading(false);
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadSharedNotes();
+    setIsRefreshing(false);
+    setPullDistance(0);
+    showToast('Shared notes refreshed!', 'success');
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isRefreshing || sharedNotesLoading) return;
+    
+    const touchY = e.touches[0].clientY;
+    const distance = touchY - touchStartY.current;
+    
+    if (window.scrollY === 0 && distance > 0) {
+      setPullDistance(Math.min(distance, 120));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 80 && !isRefreshing) {
+      handleRefresh();
+    } else {
+      setPullDistance(0);
+    }
+  };
+
   const handleViewDetails = (note: Note) => {
     setSelectedNote(note);
   };
@@ -45,7 +82,7 @@ export default function SharedNotesPage() {
     // TODO: Implement tag filtering
   };
 
-  if (sharedNotesLoading) {
+  if (sharedNotesLoading && !isRefreshing) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -57,7 +94,51 @@ export default function SharedNotesPage() {
   }
 
   return (
-    <div>
+    <div
+      ref={scrollContainerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative"
+    >
+      {/* Pull to Refresh Indicator */}
+      {pullDistance > 0 && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex items-center justify-center transition-all duration-200 z-10"
+          style={{ 
+            height: `${pullDistance}px`,
+            opacity: pullDistance / 120
+          }}
+        >
+          <div className="flex flex-col items-center">
+            <div className={`transition-transform duration-200 ${pullDistance > 80 ? 'rotate-180' : ''}`}>
+              <svg 
+                className="w-6 h-6 text-blue-600 dark:text-blue-400" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              {pullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Refreshing Spinner */}
+      {isRefreshing && (
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-center py-4 z-10">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+        </div>
+      )}
+
+      <div style={{ marginTop: isRefreshing ? '40px' : '0px', transition: 'margin-top 0.2s' }}>
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Shared with Me</h1>
@@ -132,6 +213,7 @@ export default function SharedNotesPage() {
           isSharedNote={true}
         />
       )}
+      </div>
     </div>
   );
 }
