@@ -1,15 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.example.app',
-  appName: 'noteapp',
-  webDir: 'public',
+  appId: 'com.noteapp.app',
+  appName: 'NoteApp',
+  webDir: 'out',
   server: {
-    // iOS Simulator can access localhost directly (bypasses firewall)
-    // For physical device testing, you'll need to use your network IP and configure firewall
-    url: 'http://192.168.0.110:3000',
-    cleartext: true,
-    androidScheme: 'http'
+    // For production, remove the url and use the deployed web app
+    // url: 'http://192.168.0.110:3000',
+    // cleartext: true,
+    androidScheme: 'https'
   },
   plugins: {
     StatusBar: {
